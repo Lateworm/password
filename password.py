@@ -3,12 +3,19 @@ from pygame.locals import *
 from time import sleep
 import random
 
-# Constants
+# CONSTANTS
 
-line_height = 20
-window_dimensions = [640, 480] # 32 x 24 lines
-(colour_bg, colour_text) = ((46,46,46), (126, 224, 126))
-attempts = 4
+cfg = {
+  'font_face': 'couriernew',
+  'font_height': 18,
+  'line_height': 20,
+  'window_width': 32, # window dimensions in lines
+  'window_height': 24,
+  'window_title': 'PASSWORD_HACK >',
+  'colour_bg': (46, 46, 46),
+  'colour_text': (126, 224, 126),
+  'colour_alpha': (86, 135, 86), # TODO: extract this to a function
+}
 
 word_sets = [
   [
@@ -41,32 +48,34 @@ words = word_sets[random.randint(0, len(word_sets)-1)]
 random.shuffle(words)
 password = words[random.randint(0, len(words)-1)]
 
+# SETUP
 
-# Setup
+attempts = 4
 
 pygame.init()
 clock = pygame.time.Clock()
-pygame.display.set_caption('PASSWORD_HACK >')
+pygame.display.set_caption(cfg['window_title'])
 
-window = pygame.display.set_mode(window_dimensions)
-window.fill(colour_bg)
+window = pygame.display.set_mode([cfg['line_height'] * cfg['window_width'], cfg['line_height'] * cfg['window_height']])
+window.fill(cfg['colour_bg'])
 
-font = pygame.font.SysFont('ubuntumono', 18)
+# TODO: is there some way to package a font so we can get it to render the same cross-platform?
+font = pygame.font.SysFont(cfg['font_face'], cfg['font_height'])
 # font.set_bold(True)
 
 
-# methods
+# METHODS
 
 def line_offset(px):
   if px == 'center':
-    return line_height
+    return cfg['line_height']
     # TODO: write centering logic
   else:
-    return line_height * px
+    return cfg['line_height'] * px
 
-def window_print(*, str, colour = colour_text, x, y):
+def window_print(*, str, colour = cfg['colour_text'], x, y):
   window.blit(
-    font.render(str, True, colour, colour_bg),
+    font.render(str, True, colour, cfg['colour_bg']),
     (line_offset(x), line_offset(y))
   )
   pygame.display.update()
@@ -76,7 +85,7 @@ def window_input(prompt, x, y):
   delimiter = ''
   
   window.blit(
-    font.render(prompt + '_______', True, colour_text, colour_bg),
+    font.render(prompt + '_______', True, cfg['colour_text'], cfg['colour_bg']),
     (line_offset(x), line_offset(y))
   )
   pygame.display.update()
@@ -99,7 +108,7 @@ def window_input(prompt, x, y):
           
         display_line = prompt + display_str
         window.blit(
-          font.render(display_line, True, colour_text, colour_bg),
+          font.render(display_line, True, cfg['colour_text'], cfg['colour_bg']),
           (line_offset(x), line_offset(y))
         )
         pygame.display.update()
@@ -134,27 +143,27 @@ def handle_guess(attempts):
   if (guess != password):
     window_print(
       str = "%s INCORRECT" %(guess),
-      x = 20, y = 1 + ((4 - attempts) *3))
+      x = 17, y = 1 + ((4 - attempts) *3))
       # TODO: upgrade window_print to allow a negative integer as right offset
     window_print(
       str = "%s/7 IN MATCHING POSITIONS" %(matching_positions),
-      x = 20, y = 2 + ((4 - attempts) *3))
+      x = 17, y = 2 + ((4 - attempts) *3))
     attempts = attempts - 1
     window_print(str = "%s ATTEMPT(S) LEFT" %(attempts), x = 1, y = 2)
     
   if (guess == password):
-    window.fill(colour_bg)
-    window_print(str = 'LOGIN SUCCESSFUL', x = 'center', y = 10)
-    window_print(str = 'WELCOME BACK, COMMANDER', x = 'center', y = 12)
-    window_print(str = 'PRESS ENTER TO EXIT', x = 'center', y = 14)
+    window.fill(cfg['colour_bg'])
+    window_print(str = 'LOGIN SUCCESSFUL', x = 'center', y = 9)
+    window_print(str = 'WELCOME BACK, COMMANDER', x = 'center', y = 11)
+    window_print(str = 'PRESS ENTER TO EXIT', x = 'center', y = 13)
     enter_to_exit()
     return
   
   if (attempts == 0 and guess != password):
-    window.fill(colour_bg)
-    window_print(str = 'LOGIN FAILURE', x = 'center', y = 10)
-    window_print(str = 'INITIATING SYSTEM LOCKDOWN', x = 'center', y = 12)
-    window_print(str = 'PRESS ENTER TO EXIT', x = 'center', y = 14)
+    window.fill(cfg['colour_bg'])
+    window_print(str = 'LOGIN FAILURE', x = 'center', y = 9)
+    window_print(str = 'INITIATING SYSTEM LOCKDOWN', x = 'center', y = 11)
+    window_print(str = 'PRESS ENTER TO EXIT', x = 'center', y = 13)
     enter_to_exit()
     return
     
@@ -163,22 +172,26 @@ def handle_guess(attempts):
 # end handle_guess
     
     
-# Script
+# SCRIPT
 
 window_print(str = 'PASSWORD RECOVERY CONSOLE', x = 1, y = 1)
 window_print(str = "%s ATTEMPT(S) LEFT" %(attempts), x = 1, y = 2)
 
 for num, word in enumerate(words, start = 4):
   decoy_length = 9
-  prefix_length = random.randint(1, decoy_length)
-  postfix_length = decoy_length - prefix_length
-  
+  total_length = 24
+  prefix_length = random.randint(1, total_length - len(word) + 1)
+  decoy_bg = ''
+  decoy_prefix = ''
+
+  for i in range(0, total_length):
+    decoy_bg = decoy_bg + decoy_chars[random.randint(0, len(decoy_chars)-1)]
   for i in range(0, prefix_length):
-    word = decoy_chars[random.randint(0, len(decoy_chars)-1)] + word
-  for i in range(0, postfix_length):
-    word = word + decoy_chars[random.randint(0, len(decoy_chars)-1)]
-    
-  window_print(str = word, x = 1, y = num)
+    decoy_prefix = decoy_prefix + decoy_bg[i]
+  
+  window_print(str = decoy_bg, colour = cfg['colour_alpha'], x = 1, y = num)
+  window_print(str = decoy_prefix + word, x = 1, y = num)
+  window_print(str = decoy_prefix, colour = cfg['colour_alpha'], x = 1, y = num)
   
 # guess = window_input(prompt = 'ENTER PASSWORD > ', x = 1, y = 18 + 4 - attempts)
 handle_guess(attempts)

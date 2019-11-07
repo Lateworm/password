@@ -1,1 +1,1 @@
-# Password Hack Minigame
+# Password Hacking Minigame
